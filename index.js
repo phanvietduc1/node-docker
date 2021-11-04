@@ -1,34 +1,44 @@
-// const express = require('express');
+'use strict';
+const express = require("express");
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const studentRouters = require('./routers/baiHat-routes');
 
-// const app = express();
-
-// app.get('/', function(rea, res){
-//     res.send("Hello World");
-// });
-
-// app.listen(80);
-
-const { response } = require('express');
 const http = require('http');
+const { config } = require("process");
+const app = express();
 
-// let movieList = [
-//     {
-//       id: "0",
-//       song: "Aik Alif",
-//       url: "http://hck.re/Rh8KTk",
-//       artist : "Momina",
-//       image : "http://hck.re/kWWxUI"
-//     }
-//   ];
+app.use(express.json());
+app.use(cors());
+app.use(bodyParser.json());
+app.use('/api', studentRouters.router);
+
+let movieList = [
+  {
+    id: "0",
+    song: "Aik Alif",
+    url: "http://hck.re/Rh8KTk",
+    artist : "Momina",
+    image : "http://hck.re/kWWxUI"
+  }
+];
 
 const server = http.createServer((request, response) => {
     response.writeHead(200, {"Content-Type": "text/plain"});
-    response.end("OK123");
-    
-    // response.status(200).send(movieDetail);
+
+    response.write(request.url);
+
+    response.end(JSON.stringify(movieList, null, 3));
 });
 
-const port = process.env.PORT || 1311;
-server.listen(port);
 
-console.log("run at", port);
+app.get('/songs', function(req, res, next) {
+  res.status(200).send("sdjhfjkdshfjk");
+});
+
+// const port = process.env.PORT || 1311;
+// app.listen(port, () => {
+//   console.log("run at", port);
+// });
+
+app.listen(config.port, () => console.log('listening on http://localhost:' + config.port));
