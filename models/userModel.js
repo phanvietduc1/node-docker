@@ -23,7 +23,7 @@ const User = mongoose.model('User', {
         type:String,
         required:true
     },
-    salary: {
+    password: {
         type:String,
         required:true
     }

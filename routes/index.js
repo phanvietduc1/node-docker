@@ -3,15 +3,15 @@ const router = express.Router();
 const ObjectId = require('mongoose').Types.ObjectId;    
 
 const { getUser,
-        getSingleUserByPhone,
-    res2 } = require('../controllers/userController');
+        register,
+        login } = require('../controllers/userController');
 
-const userController = require("../controllers/userController");
+// const userController = require("../controllers/userController");
 
 
 router.get('/api/user', getUser);
-// router.get('/api/user/:phone', getSingleUserByPhone);
-router.post('/api/user/res2', res2);
+router.post('/api/user/register', register);
+router.post('/api/user/login', login);
 
 
 // Get Single Employee (2nd Way)
