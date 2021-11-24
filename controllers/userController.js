@@ -1,8 +1,10 @@
 const { User } = require('../models/userModel');
-
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const apiResponse = require("../helpers/apiResponse");
+const mailer = require("../helpers/mailer");
+const { constants } = require("../helpers/constants");
+const utility = require("../helpers/utility");
 
 const getUser = async (req, res, next) => {
     User.find({}, (err, data) => {
@@ -30,14 +32,38 @@ const register = async (req, res, next) => {
             email: req.body.email,
             password: hash
         });
-        emp.save((err, data) => {
-            if(!err) {
-                // res.send(data);
-                res.status(200).json({code: 200, message: 'User Added Successfully', addUser: data})
-            } else {
+
+        let otp = utility.randomNumber(4);
+
+        // emp.save((err, data) => {
+        //     if(!err) {
+        //         // res.send(data);
+        //         res.status(200).json({code: 200, message: 'User Added Successfully', addUser: data})
+        //     } else {
+        //     console.log(err);
+        //     }
+        // });
+
+        let html = "<p>Please Confirm your Account.</p><p>OTP: "+otp+"</p>";
+        // Send confirmation email
+        mailer.send(
+            '<testAPI1618@gmail.com> ', 
+            req.body.email,
+            "Confirm Account",
+            html
+        ).then(function(){
+            emp.save((err, data) => {
+                if(!err) {
+                    // res.send(data);
+                    res.status(200).json({code: 200, message: 'User Added Successfully', addUser: data})
+                } else {
+                    console.log(err);
+                }
+            });
+        }).catch(err => {
             console.log(err);
-            }
-        });
+            // return apiResponse.ErrorResponse(res,err);
+        }) ;
     });
 }
 
@@ -55,8 +81,8 @@ const login = async (req, res, next) => {
         // if (!errors.isEmpty()) {
         //     return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
         // }else {
-            console.log(req.body.email);
-            console.log(req.body.password);
+            // console.log(req.body.email);
+            // console.log(req.body.password);
 
             User.findOne({email : req.body.email}).then(user => {
                 if (user) {
@@ -78,7 +104,7 @@ const login = async (req, res, next) => {
                                         expiresIn: "2 hours",
                                     };
                                     const secret = "myscret";
-                                    console.log(secret);
+                                    // console.log(secret);
                                     //Generated JWT token with Payload and secret.
                                     userData.token = jwt.sign(jwtPayload, secret, jwtData);
                                     // return apiResponse.successResponseWithData(userData);
@@ -103,8 +129,17 @@ const login = async (req, res, next) => {
     }
 }
 
+const logout = async (req, res) => {
+    try {
+        res.clearCookie("jwt");
+    } catch{
+        res.status(500).send(err);
+    }
+}
+
 module.exports = {
     getUser,
     register,
-    login
+    login,
+    logout
 }

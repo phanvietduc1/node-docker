@@ -1,18 +1,17 @@
 let mongoose = require('mongoose');
 
-const User = mongoose.model('User', {
-    name: {
+const Artist = mongoose.model('Artist', {
+    IdNgheSi: {
         type: String,
         required:true
     },
-    email: {
+    TenNgheSi: {
         type:String,
         required:true
     },
-    password: {
+    HinhNgheSi: {
         type:String,
         required:true
     }
-
 });
-module.exports = {User}
+module.exports = {Artist}

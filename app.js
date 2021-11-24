@@ -2,21 +2,22 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
-
-// Dotenv is a zero-dependency module that loads environment variables from a .env file into process.env
+const morgan = require('morgan');
 
 const app = express();
+
 app.use(bodyParser.json());
 app.use(cors());
+app.use(morgan('dev'));
 
 const connectDB = require('./config/db');
-// Load Config
-// dotenv.config({path: './config/config.env'})
+const trackRoutes = require('./routes/tracks');
 
 connectDB();
 
 // Routes
 app.use('/', require('./routes/index'));
+app.use('/tracks', trackRoutes);
 
 const port = process.env.PORT || 1111;
 app.listen(port, () => {
