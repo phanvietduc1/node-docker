@@ -12,7 +12,14 @@ const User = mongoose.model('User', {
     password: {
         type:String,
         required:true
+    },
+    isConfirmed: {
+        type:String,
+        required:true
+    }, 
+    otp: {
+        type:String,
+        required:true
     }
-
 });
 module.exports = {User}

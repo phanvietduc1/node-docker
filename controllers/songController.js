@@ -38,6 +38,48 @@ const getSong = async (req, res, next) => {
     });
 }
 
+const getSongByArtist = async (req, res, next) => {
+    const emp = {
+        idNgheSi: new RegExp('^' + req.body.keyword + '$', "i")
+    };
+
+    Song.find(emp).limit(100).exec((err, result) => {
+        if(!err) {
+            res.status(200).json(result)
+        } else {
+            console.log(err);
+        }
+    });
+}
+
+const getSongByName = async (req, res, next) => {
+    const emp = {
+        tenBaiHat: new RegExp('^' + req.body.keyword + '$', "i")
+    };
+
+    Song.find(emp).limit(100).exec((err, result) => {
+        if(!err) {
+            res.status(200).json(result)
+        } else {
+            console.log(err);
+        }
+    });
+}
+
+const getSongByGenres = async (req, res, next) => {
+    const emp = {
+        idTheLoai: new RegExp('^' + req.body.keyword + '$', "i")
+    };
+
+    Song.find(emp).limit(100).exec((err, result) => {
+        if(!err) {
+            res.status(200).json(result)
+        } else {
+            console.log(err);
+        }
+    });
+}
+
 const insertSong = async(req, res, next) => {
     const storage = multer.memoryStorage();
     const upload = multer({storage, limits: {
@@ -64,5 +106,8 @@ const insertSong = async(req, res, next) => {
 
 module.exports = {
     getSong,
-    getSongByKeyWord
+    getSongByKeyWord,
+    getSongByArtist,
+    getSongByGenres,
+    getSongByName
 }

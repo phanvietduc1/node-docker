@@ -9,7 +9,7 @@ const Song = mongoose.model('Song', {
         type:String,
         required:true
     },
-    idAblum: {
+    idNgheSi: {
         type:String,
         required:true
     },

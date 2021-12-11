@@ -27,22 +27,15 @@ const getUser = async (req, res, next) => {
  */
 const register = async (req, res, next) => {
     bcrypt.hash(req.body.password,10,function(err, hash) {
+        let otp = utility.randomNumber(4);
+
         const emp = new User({
             name: req.body.name,
             email: req.body.email,
-            password: hash
+            password: hash,
+            otp: otp,
+            isConfirmed: "0"
         });
-
-        let otp = utility.randomNumber(4);
-
-        // emp.save((err, data) => {
-        //     if(!err) {
-        //         // res.send(data);
-        //         res.status(200).json({code: 200, message: 'User Added Successfully', addUser: data})
-        //     } else {
-        //     console.log(err);
-        //     }
-        // });
 
         let html = "<p>Please Confirm your Account.</p><p>OTP: "+otp+"</p>";
         // Send confirmation email
@@ -77,53 +70,37 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
     try {
-        // const errors = validationResult(req);
-        // if (!errors.isEmpty()) {
-        //     return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
-        // }else {
-            // console.log(req.body.email);
-            // console.log(req.body.password);
-
-            User.findOne({email : req.body.email}).then(user => {
-                if (user) {
-                    //Compare given password with db's hash.
-                    bcrypt.compare(req.body.password,user.password,function (err,same) {
-                        if(same){
-                            //Check account confirmation.
-                            // if(user.isConfirmed){
-                                // Check User's account active or not.
-                                // if(user.status) {
-                                    let userData = {
-                                        _id: user._id,
-                                        name: user.name,
-                                        email: user.email,
-                                    };
-                                    //Prepare JWT token for authentication
-                                    const jwtPayload = userData;
-                                    const jwtData = {
-                                        expiresIn: "2 hours",
-                                    };
-                                    const secret = "myscret";
-                                    // console.log(secret);
-                                    //Generated JWT token with Payload and secret.
-                                    userData.token = jwt.sign(jwtPayload, secret, jwtData);
-                                    // return apiResponse.successResponseWithData(userData);
-                                    return res.status(200).json(userData);
-                                // }else {
-                                //     return apiResponse.unauthorizedResponse(res, "Account is not active. Please contact admin.");
-                                // }
-                            // }else{
-                            //     return apiResponse.unauthorizedResponse(res, "Account is not confirmed. Please confirm your account.");
-                            // }
-                        }else{
-                            return apiResponse.unauthorizedResponse(res, "Email or Password wrong.");
-                        }
-                    });
-                }else{
-                    return apiResponse.unauthorizedResponse(res, "Email or Password wrong.");
-                }
-            });
-        // }
+        User.findOne({email : req.body.email}).then(user => {
+            if (user) {
+                //Compare given password with db's hash.
+                bcrypt.compare(req.body.password,user.password,function (err,same) {
+                    if(same){
+                        let userData = {
+                            _id: user._id,
+                            name: user.name,
+                            email: user.email,
+                            otp: user.otp,
+                            isConfirmed: user.isConfirmed
+                        };
+                        //Prepare JWT token for authentication
+                        const jwtPayload = userData;
+                        const jwtData = {
+                            expiresIn: "2 hours",
+                        };
+                        const secret = "myscret";
+                        //Generated JWT token with Payload and secret.
+                        userData.token = jwt.sign(jwtPayload, secret, jwtData);
+                        
+                        console.log(userData);
+                        return res.status(200).json(userData);
+                    }else{
+                        return apiResponse.unauthorizedResponse(res, "Email or Password wrong.");
+                    }
+                });
+            }else{
+                return apiResponse.unauthorizedResponse(res, "Email or Password wrong.");
+            }
+        });
     } catch (err) {
         return apiResponse.ErrorResponse(res, err);
     }
@@ -137,9 +114,92 @@ const logout = async (req, res) => {
     }
 }
 
+const confirmOtp = async (req, res, next) => {
+    try {
+        var query = {email : req.body.email};
+        User.findOne(query).then(user => {
+            if (user) {
+                //Check already confirm or not.
+                if(user.isConfirmed == "0"){
+                    //Check account confirmation.
+                    if(user.otp == req.body.otp){
+                        //Update user as confirmed
+                        User.findOneAndUpdate(query, {
+                            isConfirmed: "1",
+                            confirmOTP: null 
+                        }).catch(err => {
+                            return apiResponse.ErrorResponse(res, err);
+                        });
+                        return apiResponse.successResponse(res,"Account confirmed success.");
+                    }else{
+                        return apiResponse.unauthorizedResponse(res, "Otp does not match");
+                    }
+                }else{
+                    return apiResponse.unauthorizedResponse(res, "Account already confirmed.");
+                }
+            }else{
+                return apiResponse.unauthorizedResponse(res, "Specified email not found.");
+            }
+        });
+    } catch (err) {
+        return apiResponse.ErrorResponse(res, err);
+    }
+}
+
+const resetPassword = async (req, res, next) => {
+    try {
+        let newPassword = utility.randomNumber(6);
+        bcrypt.hash(newPassword.toString(),10,function(err, hash) {
+            console.log(hash);
+            let html = "<p>Your new password:</p><p> "+newPassword+"</p>";
+            // Send email
+            mailer.send(
+                '<testAPI1618@gmail.com> ', 
+                req.body.keyword,
+                "Reset password",
+                html
+            ).then(function(){
+                var query = {email : req.body.keyword};
+
+                User.findOneAndUpdate(query, {
+                    password: hash,
+                }).catch(err => {
+                    return apiResponse.ErrorResponse(res, err);
+                });
+
+                return apiResponse.successResponse(res,"Reset password success.");
+            }).catch(err => {
+                console.log(err);
+            }) ;
+        });
+    } catch {
+        res.status(500).send(err);
+    }
+}
+
+const changePassword = async (req, res, next) => {
+    User.findOne({email : req.body.email}).then(user => {
+        if (user) {
+            bcrypt.hash(req.body.password,10,function(err, hash) {
+                console.log(hash);
+                var query = {email : req.body.email};
+                User.findOneAndUpdate(query, {
+                    password: hash
+                }).catch(err => {
+                    return apiResponse.ErrorResponse(res, err);
+                });
+                return apiResponse.successResponse(res,"Reset password success.");
+            });
+        }
+    });
+}
+
 module.exports = {
     getUser,
     register,
     login,
-    logout
+    logout,
+    confirmOtp,
+    resetPassword,
+    changePassword
 }
